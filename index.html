@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Studora</title>
+    <link rel="icon" type="image/png" href="/studora-icon.png" />
+    <link rel="apple-touch-icon" href="/studora-icon.png" />
+    <style>
+      .studora-boot-screen {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f3f4f6;
+      }
+
+      .studora-boot-logo {
+        width: 112px;
+        height: 112px;
+        object-fit: contain;
+        animation: studora-logo-fade 1.6s ease-in-out infinite;
+      }
+
+      @keyframes studora-logo-fade {
+        0%,
+        100% {
+          opacity: 0.35;
+          transform: scale(0.94);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .studora-boot-logo,
+        .loading-logo {
+          animation: none;
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root">
+      <main class="studora-boot-screen" role="status" aria-label="Loading Studora">
+        <img class="studora-boot-logo" src="/studora-icon.png" alt="" />
+      </main>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
