@@ -5,6 +5,8 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { connectToDatabase } from "./db.js";
 import { createAuthToken, requireAuth, requireRole, serializeUser } from "./auth.js";
 import CollegeEvent from "./models/CollegeEvent.js";
@@ -14,8 +16,37 @@ import SystemSettings from "./models/SystemSettings.js";
 import User from "./models/User.js";
 
 const app = express();
-app.use(helmet());
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      frameSrc: ["'self'", "https://maps.google.com", "https://www.google.com"],
+    },
+  },
+}));
 app.use(express.json({ limit: "20kb" }));
+app.use("/api", (request, response, next) => {
+  const origin = request.get("Origin");
+  const allowedOrigins = (process.env.FRONTEND_ORIGIN || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const isAllowedOrigin = origin && allowedOrigins.includes(origin);
+  if (isAllowedOrigin) {
+    response.set("Access-Control-Allow-Origin", origin);
+    response.vary("Origin");
+  }
+  if (request.method === "OPTIONS") {
+    if (origin && !isAllowedOrigin) {
+      return response.status(403).json({ message: "Origin is not allowed." });
+    }
+    response.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    response.set("Access-Control-Allow-Headers", "Authorization, Content-Type");
+    return response.sendStatus(204);
+  }
+  next();
+});
 
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -1084,6 +1115,14 @@ app.put("/api/settings", async (request, response) => {
 
 app.use("/api", (_request, response) => {
   response.status(404).json({ message: "API endpoint not found." });
+});
+
+const clientBuildDirectory = path.join(projectRoot, "dist");
+app.use(express.static(clientBuildDirectory));
+app.get("/{*path}", (_request, response, next) => {
+  response.sendFile(path.join(clientBuildDirectory, "index.html"), (error) => {
+    if (error) next(error);
+  });
 });
 
 app.use((error, _request, response, _next) => {

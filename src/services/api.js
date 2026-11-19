@@ -1,4 +1,5 @@
 let authToken = sessionStorage.getItem("studentHubToken");
+const apiBaseUrl = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
 export function getAuthToken() {
   return authToken;
@@ -22,7 +23,7 @@ async function request(path, options = {}) {
   }
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
-  const response = await fetch(`/api${path}`, {
+  const response = await fetch(`${apiBaseUrl}/api${path}`, {
     ...options,
     headers,
   });
